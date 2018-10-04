@@ -28,7 +28,9 @@ class ENVied
     end
 
     def [](name)
-      coerce(variables_by_name[name.to_sym])
+      variable = variables_by_name[name.to_sym]
+      raise ArgumentError, "No variable #{name} is defined" unless variable
+      coerce(variable)
     end
 
     def has_key?(name)

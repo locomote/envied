@@ -31,6 +31,14 @@ class ENVied
     end
   end
 
+  # Allow to retrieve variable by it's name
+  #
+  # @example
+  #   ENVied["RACK_ENV"] # => "development"
+  def self.[](name)
+    env && env[name.to_s]
+  end
+
   def self.error_on_missing_variables!(options = {})
     names = env.missing_variables.map(&:name)
     if names.any?
@@ -81,7 +89,7 @@ MSG
   end
 
   def self.method_missing(method, *args, &block)
-    respond_to_missing?(method) ? (env && env[method.to_s]) : super
+    respond_to_missing?(method) ? self[method.to_s] : super
   end
 
   def self.respond_to_missing?(method, include_private = false)

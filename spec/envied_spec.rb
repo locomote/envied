@@ -376,5 +376,16 @@ describe ENVied do
         end
       end
     end
+
+    describe '::[]' do
+      before do
+        configured_with(name: :string).and_ENV({'name' => 'value'})
+        envied_require
+      end
+
+      it 'delegates call to env!' do
+        expect(described_class['name']).to eq('value')
+      end
+    end
   end
 end
