@@ -1,5 +1,9 @@
+require 'forwardable'
+
 # Responsible for all string to type coercions.
 class ENVied::Coercer
+  extend Forwardable
+  SUPPORTED_TYPES = [:env, :hash, :array, :time, :date, :symbol, :boolean, :integer, :string, :uri, :float].sort
 
   UnsupportedCoercion = Class.new(StandardError)
 
@@ -14,16 +18,36 @@ class ENVied::Coercer
   #
   # @return [type] the coerced string.
   def coerce(string, type)
-    unless supported_type?(type)
+    if self.class.built_in_type?(type)
+      coercer.public_send("to_#{type.downcase}", string)
+    elsif self.class.custom_type?(type)
+      custom_types[type].coerce(string)
+    else
       raise ArgumentError, "The type `#{type.inspect}` is not supported."
     end
-    coercer.public_send("to_#{type.downcase}", string)
+  end
+
+  def self.built_in_type?(type)
+    SUPPORTED_TYPES.include?(type)
+  end
+
+  def self.custom_type?(type)
+    custom_types.key?(type)
+  end
+
+  # Custom types container.
+  #
+  # @example
+  #   ENVied::Coercer.custom_types[:json] =
+  #     ENVied::Type.new(:json, ->(str) { JSON.parse(str) })
+  #
+  # @return
+  def self.custom_types
+    @custom_types ||= {}
   end
 
   def self.supported_types
-    @supported_types ||= begin
-      [:env, :hash, :array, :time, :date, :symbol, :boolean, :integer, :string, :uri, :float].sort
-    end
+    SUPPORTED_TYPES + custom_types.keys
   end
 
   # Whether or not Coercer can coerce strings to the provided type.
@@ -36,8 +60,11 @@ class ENVied::Coercer
   #
   # @return [Boolean] whether type is supported.
   def self.supported_type?(type)
-    supported_types.include?(type.to_sym.downcase)
+    name = type.to_sym.downcase
+    built_in_type?(name) || custom_type?(name)
   end
+
+  def_delegators :'self.class', :supported_type?, :supported_types, :custom_types
 
   def supported_type?(type)
     self.class.supported_type?(type)

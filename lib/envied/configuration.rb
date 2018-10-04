@@ -1,5 +1,7 @@
 class ENVied
   class Configuration
+    DEFAULT_TYPE = :string
+
     attr_reader :current_group, :coercer
 
     def initialize(**options, &block)
@@ -27,12 +29,16 @@ class ENVied
       end
     end
 
-    def variable(name, type = :string, **options)
+    def variable(name, type = DEFAULT_TYPE, **options)
       unless coercer.supported_type?(type)
         raise ArgumentError, "#{type.inspect} is not a supported type. Should be one of #{coercer.supported_types}"
       end
       options[:group] = current_group if current_group
       variables << ENVied::Variable.new(name, type, options)
+    end
+
+    def type(name, &block)
+      coercer.custom_types[name] = Type.new(name, block)
     end
 
     def group(*names, &block)
