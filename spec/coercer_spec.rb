@@ -125,13 +125,10 @@ describe ENVied::Coercer do
       let(:coerce) { coerce_to(:json) }
 
       before do
-        coercer.custom_types[:json] =
-          ENVied::Type.new(
-            :json,
-            lambda do |raw_string|
-              JSON.parse(raw_string)
-            end
-          )
+        coercer.custom_types.push(:json)
+        coercer.define_singleton_method("to_json") do |raw_string|
+          JSON.parse(raw_string)
+        end
       end
 
       it 'converts strings to defined custom type' do

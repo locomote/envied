@@ -41,7 +41,7 @@ describe ENVied::Configuration do
   end
 
   describe '#type' do
-    subject { config.coercer.custom_types }
+    # subject { config.coercer.custom_types }
 
     let(:coercer) { ->(raw_string) { Integer(raw_string) ** 2 } }
     let(:config) do
@@ -51,8 +51,12 @@ describe ENVied::Configuration do
       end
     end
 
-    it 'creates type with given coercing block' do
-      is_expected.to include(power_integer: ENVied::Type.new(:power_integer, coercer))
+    it 'registers new custom method' do
+      expect(config.coercer).to respond_to(:to_power_integer)
+    end
+
+    it 'defines new coercing method in coercer instance' do
+      expect(config.coercer.method(:to_power_integer).source).to eq(coercer.source)
     end
   end
 

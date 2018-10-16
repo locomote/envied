@@ -4,7 +4,6 @@ require 'envied/env_proxy'
 require 'envied/coercer'
 require 'envied/coercer/envied_string'
 require 'envied/variable'
-require 'envied/type'
 require 'envied/configuration'
 
 class ENVied
@@ -27,7 +26,7 @@ class ENVied
     @env = begin
       @config = options.fetch(:config) { Configuration.load }
       groups = required_groups(*requested_groups)
-      EnvProxy.new(@config, groups: groups)
+      EnvProxy.new(@config, groups: groups, coercer: @config.coercer)
     end
   end
 

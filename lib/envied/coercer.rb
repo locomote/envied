@@ -7,45 +7,55 @@ class ENVied::Coercer
   SUPPORTED_TYPES = %i(hash array time date symbol boolean integer string uri float).freeze
 
   class << self
-    def built_in_type?(type)
-      SUPPORTED_TYPES.include?(type)
-    end
-
-    def custom_type?(type)
-      custom_types.key?(type)
-    end
-
-    # Custom types container.
-    #
-    # @example
-    #   ENVied::Coercer.custom_types[:json] =
-    #     ENVied::Type.new(:json, ->(str) { JSON.parse(str) })
-    #
-    # @return
-    def custom_types
-      @custom_types ||= {}
+    def base_type?(type)
+      name = type.to_sym.downcase
+      supported_types.include?(name)
     end
 
     def supported_types
-      SUPPORTED_TYPES + custom_types.keys
-    end
-
-    # Whether or not Coercer can coerce strings to the provided type.
-    #
-    # @param type [#to_sym] the type (case insensitive)
-    #
-    # @example
-    #   ENVied::Coercer.supported_type?('string')
-    #   # => true
-    #
-    # @return [Hash] of type names and their definitions.
-    def supported_type?(type)
-      name = type.to_sym.downcase
-      built_in_type?(name) || custom_type?(name)
+      SUPPORTED_TYPES
     end
   end
 
-  def_delegators :'self.class', :supported_type?, :supported_types, :custom_types
+  def_delegators :'self.class', :base_type?
+
+  # Whether or not Coercer can coerce strings to the provided type.
+  #
+  # @param type [#to_sym] the type (case insensitive)
+  #
+  # @example
+  #   ENVied::Coercer.new.supported_type?('string')
+  #   # => true
+  #
+  # @return [Hash] of type names and their definitions.
+  def supported_type?(type)
+    base_type?(type) || custom_type?(type)
+  end
+
+  # Whether or not Coercer has the provided type as a custom one.
+  #
+  # Custom data type can be registered using Configuration#type method.
+  #
+  # @param type [#to_sym] the type (case insensitive)
+  #
+  # @example
+  #   ENVied::Coercer.new.custom_type?('string')
+  #   # => false
+  #
+  # @return [Hash] of type names and their definitions.
+  def custom_type?(type)
+    name = type.to_sym.downcase
+    custom_types.include?(name)
+  end
+
+  # List of custom types.
+  def custom_types
+    @custom_types ||= []
+  end
+
+  def supported_types
+    self.class.supported_types + custom_types
+  end
 
   # Coerce strings to specific type.
   #
@@ -58,18 +68,18 @@ class ENVied::Coercer
   #
   # @return [type] the coerced string.
   def coerce(string, type)
-    if self.class.built_in_type?(type)
-      coerce_method_for(type.to_sym)[string]
-    elsif self.class.custom_type?(type)
-      custom_types[type].coerce(string)
-    else
-      raise ArgumentError, "#{type.inspect} is not supported type"
-    end
+    method = coerce_method_for(type)
+    raise ArgumentError, "#{type.inspect} is not supported type" unless method
+    method.call(string)
   end
 
   def coerce_method_for(type)
-    return nil unless supported_type?(type)
-    coercer.method("to_#{type.downcase}")
+    method_name = "to_#{type.downcase}"
+    if base_type?(type)
+      coercer.method(method_name)
+    elsif custom_type?(type)
+      method(method_name)
+    end
   end
 
   def coercer

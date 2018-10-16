@@ -48,7 +48,8 @@ class ENVied
     end
 
     def type(name, &block)
-      coercer.custom_types[name] = Type.new(name, block)
+      coercer.custom_types.push(name.to_sym).uniq!
+      coercer.define_singleton_method("to_#{name}", &block)
     end
 
     def group(*names, &block)
