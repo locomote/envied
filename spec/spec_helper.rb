@@ -16,4 +16,8 @@ RSpec.configure do |config|
   end
 
   config.order = :random
+
+  config.before do
+    ENVied::Coercer.custom_types.clear
+  end
 end

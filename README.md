@@ -103,7 +103,7 @@ The following types are supported:
 
 ### Key alias (unreleased)
 
-By default the value for variable `FOO` should be provided by `ENV['FOO']`. Sometimes though it's convenient to let a different key provide the value, based on some runtime condition. A key-alias will let you do this.  
+By default the value for variable `FOO` should be provided by `ENV['FOO']`. Sometimes though it's convenient to let a different key provide the value, based on some runtime condition. A key-alias will let you do this.
 
 Consider for example local development where `REDIS_URL` differs between the development and test environment. Normally you'd prepare different shells with different values for `REDIS_URL`: one shell you can run tests in, and other shells where you'd run the console/server etc. This is cumbersome and easy to get wrong.
 
@@ -125,8 +125,8 @@ export REDIS_URL_TEST=redis://localhost:6379/1
 ```
 Now commands like `rails console` and `rails test` automatically point to the right redis database.
 
-Note that `ENV['REDIS_URL']` is still considered but `REDIS_URL_<key_alias>` takes precedence.  
-Also: any truthy value provided as key_alias is converted to an upcased string.  
+Note that `ENV['REDIS_URL']` is still considered but `REDIS_URL_<key_alias>` takes precedence.
+Also: any truthy value provided as key_alias is converted to an upcased string.
 Finally: this setting is optional.
 
 
@@ -150,10 +150,25 @@ $ DATABASE_URL_DEVELOPMENT=postgres://localhost/blog_development rails runner "p
 "postgres://localhost/blog_development"
 ```
 
-Note: this also works for `ENV.fetch('FOO')`.  
-Also: no coercion is done (like you would expect when accessing ENV-values directly).  
+Note: this also works for `ENV.fetch('FOO')`.
+Also: no coercion is done (like you would expect when accessing ENV-values directly).
 
 This means that for Rails applications when you set values for `DATABASE_URL_DEVELOPMENT` and `DATABASE_URL_TEST`, you no longer need a `config/database.yml`.
+
+
+#### Custom Types
+
+To defined your own type `#type` method can be used:
+
+```ruby
+# file: Envfile
+type :json do |raw_string|
+  JSON.parse(raw_string)
+end
+variable :CUSTOM_OPTIONS, :json
+```
+
+> NOTE: It is important to define any custom type before their usage. Otherwise you will get an `ArgumentError` exception.
 
 
 ### Groups
@@ -233,9 +248,9 @@ export DEPLOY_TOKEN=1234-ABC-5678
 
 ### let [direnv](https://direnv.net/) manage your environment
 
-[direnv](https://direnv.net/) will auto-(un)load values from `.envrc` when you switch folders.  
+[direnv](https://direnv.net/) will auto-(un)load values from `.envrc` when you switch folders.
 
-As a bonus it has some powerful commands in it's [stdlib](https://direnv.net/#man/direnv-stdlib.1).  
+As a bonus it has some powerful commands in it's [stdlib](https://direnv.net/#man/direnv-stdlib.1).
 For example:
 ```
 # this adds the project's bin-folder to $PATH
@@ -295,9 +310,9 @@ $ ./bin/heroku-env-check && git push live master
 
 ### What happened to default values??
 
-The short version: simplicity, i.e. the best tool for the job.  
+The short version: simplicity, i.e. the best tool for the job.
 
-In the early days of ENVied it was possible to provide default values for a variable.  
+In the early days of ENVied it was possible to provide default values for a variable.
 While convenient, it had several drawbacks:
 - it would introduce a value for ENVied.FOO, while ENV['FOO'] was nil: confusing and a potential source of bugs.
 - it hides the fact that an application can actually be configged via the environment.
