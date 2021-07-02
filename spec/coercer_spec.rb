@@ -270,5 +270,21 @@ RSpec.describe ENVied::Coercer do
         expect(coerce('https://www.google.com', :uri).host).to eq 'www.google.com'
       end
     end
+
+    describe 'to custom type' do
+      before do
+        coercer.custom_types[:json] =
+          ENVied::Type.new(
+            :json,
+            lambda do |raw_string|
+              JSON.parse(raw_string)
+            end
+          )
+      end
+
+      it 'converts strings to defined custom type' do
+        expect(coerce('{"a": 2}', :json)).to eq("a" => 2)
+      end
+    end
   end
 end
